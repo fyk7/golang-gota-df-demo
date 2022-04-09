@@ -164,7 +164,7 @@ func sample5() {
 		dataframe.F{
 			Colname:    "Date",
 			Comparator: series.CompFunc,
-			Comparando: isLater("2012-01-03"),
+			Comparando: isLater("2012-02-03"),
 		},
 	)
 	fmt.Println(df2)
