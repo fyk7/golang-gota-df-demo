@@ -6,18 +6,28 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-gota/gota/dataframe"
+	"github.com/go-gota/gota/series"
 )
 
-type User struct {
-	Name     string
-	Age      int
-	Accuracy float64
-	ignored  bool
+func main() {
+	sample0()
+	sample1()
+	sample2()
+	sample3()
+	sample5()
 }
 
-func main() {
+func sample0() {
+	type User struct {
+		Name     string
+		Age      int
+		Accuracy float64
+		ignored  bool
+	}
+
 	users := []User{
 		{"Aram", 17, 0.2, true},
 		{"Juan", 18, 0.8, true},
@@ -33,7 +43,6 @@ func main() {
 			Comparator: ">=",
 			Comparando: 20,
 		},
-		// dataframe.F{1, "Age", "<", 20},
 	).Select(
 		[]string{"Age", "Name"},
 	).WriteJSON(&buf)
@@ -42,10 +51,6 @@ func main() {
 	}
 
 	fmt.Println(buf.String())
-
-	sample1()
-	sample2()
-	sample3()
 }
 
 func sample1() {
@@ -56,8 +61,8 @@ Country,Date,Age,Amount,Id
 "United Kingdom",2012-02-01,17,18.2,12345
 "United States",2012-02-01,32,321.31,54320
 "United Kingdom",2012-02-01,NA,18.2,12345
-"United States",2012-02-01,32,321.31,54320
-"United States",2012-02-01,32,321.31,54320
+"United States",2012-02-05,32,321.31,54320
+"United States",2012-02-05,32,321.31,54320
 Spain,2012-02-01,66,555.42,00241
 `
 	df := dataframe.ReadCSV(strings.NewReader(csvStr))
@@ -90,8 +95,8 @@ Country,Date,Age,Amount,Id
 "United Kingdom",2012-02-01,17,18.2,12345
 "United States",2012-02-01,32,321.31,54320
 "United Kingdom",2012-02-01,NA,18.2,12345
-"United States",2012-02-01,32,321.31,54320
-"United States",2012-02-01,32,321.31,54320
+"United States",2012-02-05,32,321.31,54320
+"United States",2012-02-05,32,321.31,54320
 Spain,2012-02-01,66,555.42,00241
 `
 	csvStr2 := `
@@ -118,4 +123,50 @@ func sample3() {
 
 	df := dataframe.ReadCSV(f)
 	fmt.Println(df)
+	fmt.Println(df.Types())
+}
+
+func sample5() {
+	f, err := os.Open("sample.csv")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer f.Close()
+
+	df := dataframe.ReadCSV(f)
+
+	// 特定の日付よりも新しい行を選択するためのカスタム演算子
+	isLater := func(date string) func(el series.Element) bool {
+		return func(el series.Element) bool {
+			if el.Type() == series.String {
+				// 指定したレイアウトを満たせば、time.Time型に変換してくれる
+				layout := "2006-01-02"
+				thresh, err := time.Parse(layout, date)
+				if err != nil {
+					fmt.Println(err)
+					return false
+				}
+				if val, ok := el.Val().(string); ok {
+					d, err := time.Parse(layout, val)
+					if err != nil {
+						fmt.Println(err)
+						return false
+					}
+					return d.After(thresh)
+				}
+			}
+			return false
+		}
+	}
+
+	df2 := df.Filter(
+		dataframe.F{
+			Colname:    "Date",
+			Comparator: series.CompFunc,
+			Comparando: isLater("2012-01-03"),
+		},
+	)
+	fmt.Println(df2)
+
 }
