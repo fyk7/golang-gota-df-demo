@@ -32,6 +32,7 @@ func main() {
 			Comparator: ">=",
 			Comparando: 20,
 		},
+		// dataframe.F{1, "Age", "<", 20},
 	).Select(
 		[]string{"Age", "Name"},
 	).WriteJSON(&buf)
@@ -42,6 +43,7 @@ func main() {
 	fmt.Println(buf.String())
 
 	sample1()
+	sample2()
 }
 
 func sample1() {
@@ -75,5 +77,31 @@ Spain,2012-02-01,66,555.42,00241
 	}
 
 	fmt.Println(buf.String())
+
+}
+
+func sample2() {
+	csvStr1 := `
+Country,Date,Age,Amount,Id
+"United States",2012-02-01,50,112.1,01234
+"United States",2012-02-01,32,321.31,54320
+"United Kingdom",2012-02-01,17,18.2,12345
+"United States",2012-02-01,32,321.31,54320
+"United Kingdom",2012-02-01,NA,18.2,12345
+"United States",2012-02-01,32,321.31,54320
+"United States",2012-02-01,32,321.31,54320
+Spain,2012-02-01,66,555.42,00241
+`
+	csvStr2 := `
+Country,Capital
+"United States","ワシントンDC"
+"United Kingdom","ロンドン"
+"Spain","バルセロナ"
+`
+	df1 := dataframe.ReadCSV(strings.NewReader(csvStr1))
+	df2 := dataframe.ReadCSV(strings.NewReader(csvStr2))
+
+	join := df1.InnerJoin(df2, "Country")
+	fmt.Println(join)
 
 }
