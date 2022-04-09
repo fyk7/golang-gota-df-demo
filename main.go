@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/go-gota/gota/dataframe"
@@ -44,6 +45,7 @@ func main() {
 
 	sample1()
 	sample2()
+	sample3()
 }
 
 func sample1() {
@@ -104,4 +106,16 @@ Country,Capital
 	join := df1.InnerJoin(df2, "Country")
 	fmt.Println(join)
 
+}
+
+func sample3() {
+	f, err := os.Open("sample.csv")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer f.Close()
+
+	df := dataframe.ReadCSV(f)
+	fmt.Println(df)
 }
