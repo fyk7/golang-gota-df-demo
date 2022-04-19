@@ -10,6 +10,8 @@ import (
 
 	"github.com/go-gota/gota/dataframe"
 	"github.com/go-gota/gota/series"
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 )
 
 func main() {
@@ -18,6 +20,7 @@ func main() {
 	sample2()
 	sample3()
 	sample5()
+	sample7()
 }
 
 func sample0() {
@@ -168,5 +171,46 @@ func sample5() {
 		},
 	)
 	fmt.Println(df2)
+
+}
+
+func sample7() {
+	type User struct {
+		Name     string
+		Age      int
+		Accuracy float64
+		ignored  bool
+	}
+
+	users := []User{
+		{"Aram", 17, 0.2, true},
+		{"Juan", 18, 0.8, true},
+		{"Ana", 22, 0.5, true},
+	}
+
+	df := dataframe.LoadStructs(users)
+
+	f, err := os.Create("test_write_df.csv")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	// err = df.Rename("name", "Name").Rename("age", "Age").Rename("accuracy", "Accuracy").WriteCSV(f)
+	err = df.Rename(
+		"name", "Name",
+	).Rename(
+		"age", "Age",
+	).Rename(
+		"accuracy", "Accuracy",
+	).WriteCSV(
+		transform.NewWriter(
+			// utf-16, BigEndian, BOMにフォーマットを変更する方法
+			f, unicode.UTF16(unicode.BigEndian, unicode.UseBOM).NewEncoder(),
+		),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 }
